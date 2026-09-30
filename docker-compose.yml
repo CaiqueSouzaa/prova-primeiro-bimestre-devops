@@ -1,0 +1,66 @@
+# Sobe backend + PostgreSQL com: docker compose up --build
+# Todas as credenciais vêm do arquivo .env (copie de .env.example).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    # Mapeia as variáveis do .env para as que a imagem oficial do Postgres espera
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:?defina DB_USERNAME no .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no .env}
+      POSTGRES_DB: ${DB_DATABASE:?defina DB_DATABASE no .env}
+    # Sem "ports": a 5432 NÃO é publicada no host. "expose" apenas documenta a porta
+    # para os outros containers da mesma rede; somente o backend (na db_network) alcança o banco.
+    expose:
+      - "5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - db_network
+    # Só é considerado "healthy" quando aceita conexões (não apenas quando o processo sobe)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    # Sobrescreve o .env: dentro do Docker o banco é alcançado pelo nome do serviço, não por localhost
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      PORT: "3000"
+    ports:
+      - "3000:3000"
+    networks:
+      - db_network   # acesso ao banco
+      - app_network  # acesso a partir do host
+    # Espera o Postgres ficar saudável antes de iniciar (as migrations rodam no boot)
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # /health responde 200 só se o banco responder; caso contrário, 503
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+networks:
+  # internal: true => sem rota para fora do Docker; o host não consegue alcançar nada nesta rede
+  db_network:
+    internal: true
+  # Rede comum (bridge) que permite publicar a porta 3000 do backend no host
+  app_network:
+
+volumes:
+  postgres_data:

@@ -1,0 +1,30 @@
+# Dependências e artefatos gerados (são recriados dentro da imagem)
+node_modules
+dist
+build
+coverage
+.nyc_output
+*.tsbuildinfo
+
+# Git e editores
+.git
+.gitignore
+.vscode
+.idea
+
+# Segredos: as variáveis são injetadas pelo docker compose, nunca embutidas na imagem
+.env
+.env.*
+!.env.example
+
+# Logs
+logs
+*.log
+
+# Arquivos que não fazem parte do runtime
+test
+prompts
+README.md
+Dockerfile
+.dockerignore
+docker-compose.yml
