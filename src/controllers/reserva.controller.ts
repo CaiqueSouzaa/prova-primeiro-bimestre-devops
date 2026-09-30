@@ -27,7 +27,10 @@ export class ReservaController {
     }
 
     @Put(':id')
-    public async update(@Param() param: ShowReservaDTO, @Body() data: UpdateReservaDTO) {}
+    public async update(@Param() param: ShowReservaDTO, @Body() data: UpdateReservaDTO) {
+        data.id = param.id;
+        return this.reservaApplication.update(data);
+    }
 
     @Delete(':id')
     public async delete(@Param() param: DeleteReservaDTO) {
