@@ -41,6 +41,10 @@ pids
 # ---------- Terraform (infra/) ----------
 # Providers/módulos baixados pelo terraform init
 .terraform/
+.terraform.lock.hcl
+
+# Credenciais temporárias do Learner Lab
+aws-creds.sh
 
 # State local contém a senha do banco em texto plano
 *.tfstate
