@@ -1,54 +1,54 @@
-# O banco só pode ser colocado nas subnets privadas (sem rota para a internet).
+# modules/rds/main.tf
+
+# DB Subnet Group — exige subnets em 2+ AZs diferentes
 resource "aws_db_subnet_group" "this" {
-  name        = "${var.name}-db-subnets"
-  description = "Subnets privadas do RDS"
-  subnet_ids  = var.private_subnet_ids
+  name       = "${var.project_name}-${var.environment}-db-subnet-group"
+  subnet_ids = var.subnet_ids
 
   tags = {
-    Name = "${var.name}-db-subnets"
+    Name        = "${var.project_name}-${var.environment}-db-subnet-group"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "terraform"
   }
 }
 
+# Instância RDS PostgreSQL
 resource "aws_db_instance" "this" {
-  identifier = "${var.name}-postgres"
+  identifier = "${var.project_name}-${var.environment}-db"
 
   engine         = "postgres"
   engine_version = var.engine_version
-  # Mantém a versão fixa: a AWS não troca a minor version por conta própria.
-  auto_minor_version_upgrade = false
 
-  instance_class        = var.instance_class
-  allocated_storage     = var.allocated_storage
-  max_allocated_storage = 0 # autoscaling de storage desligado (Free Tier)
-  storage_type          = "gp3"
-  # Cifra disco, snapshots e logs com a chave gerenciada aws/rds (KMS).
-  storage_encrypted = true
+  instance_class    = var.instance_class
+  allocated_storage = var.allocated_storage
+  storage_type      = "gp2"
 
   db_name  = var.db_name
   username = var.db_username
   password = var.db_password
-  port     = var.db_port
+  port     = 5432
 
-  # Isolamento de rede: sem IP público, apenas em subnets privadas e aceitando
-  # conexões só do SG do RDS (que por sua vez só aceita o SG da EC2).
-  publicly_accessible    = false
   db_subnet_group_name   = aws_db_subnet_group.this.name
-  vpc_security_group_ids = [var.rds_sg_id]
+  vpc_security_group_ids = var.security_group_ids
+  publicly_accessible    = false
+  multi_az               = false
 
-  # Restrições do Learner Lab / Free Tier.
-  multi_az                     = false
+  backup_retention_period = 7
+  backup_window           = "03:00-04:00"
+  maintenance_window      = "sun:04:00-sun:05:00"
+
+  storage_encrypted = true
+
+  # Lab: sem snapshot final. NÃO fazer isso em produção!
+  skip_final_snapshot = true
+
   performance_insights_enabled = false
-  monitoring_interval          = 0 # Enhanced Monitoring exige criar uma IAM role
-
-  # Tudo destrutível sem intervenção manual.
-  backup_retention_period  = var.backup_retention_period
-  skip_final_snapshot      = true
-  deletion_protection      = false
-  delete_automated_backups = true
-
-  apply_immediately = true
 
   tags = {
-    Name = "${var.name}-postgres"
+    Name        = "${var.project_name}-${var.environment}-rds"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "terraform"
   }
 }
