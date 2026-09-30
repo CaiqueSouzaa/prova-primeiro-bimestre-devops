@@ -1,14 +1,37 @@
+# modules/vpc/outputs.tf
+
 output "vpc_id" {
-  description = "ID da VPC."
-  value       = aws_vpc.this.id
+  description = "ID da VPC criada"
+  value       = aws_vpc.main.id
+}
+
+output "vpc_cidr" {
+  description = "CIDR block da VPC"
+  value       = aws_vpc.main.cidr_block
+}
+
+output "subnet_ids" {
+  description = "Mapa de todos os subnet IDs (chave → ID)"
+  value       = { for key, subnet in aws_subnet.this : key => subnet.id }
 }
 
 output "public_subnet_ids" {
-  description = "IDs das subnets públicas (na ordem de azs)."
-  value       = aws_subnet.public[*].id
+  description = "Lista de IDs das subnets públicas"
+  value = [
+    for key, subnet in aws_subnet.this : subnet.id
+    if var.subnets[key].type == "public"
+  ]
 }
 
 output "private_subnet_ids" {
-  description = "IDs das subnets privadas (na ordem de azs)."
-  value       = aws_subnet.private[*].id
+  description = "Lista de IDs das subnets privadas"
+  value = [
+    for key, subnet in aws_subnet.this : subnet.id
+    if var.subnets[key].type == "private"
+  ]
+}
+
+output "internet_gateway_id" {
+  description = "ID do Internet Gateway"
+  value       = aws_internet_gateway.main.id
 }
