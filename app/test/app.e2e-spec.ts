@@ -1,29 +1,36 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/modules/app.module';
 
-describe('AppController (e2e)', () => {
+// Precisa de um PostgreSQL acessível a partir do host com as variáveis do .env
+// (o docker-compose.yml não publica a 5432; use um Postgres local ou publique a porta).
+describe('API de Reservas (e2e)', () => {
   let app: INestApplication<App>;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(new ValidationPipe());
     await app.init();
   });
 
-  it('/ (GET)', () => {
+  it('/health (GET)', () => {
     return request(app.getHttpServer())
-      .get('/')
+      .get('/health')
       .expect(200)
-      .expect('Hello World!');
+      .expect({ status: 'ok', database: 'up' });
   });
 
-  afterEach(async () => {
+  it('/reservas (POST) rejeita corpo inválido', () => {
+    return request(app.getHttpServer()).post('/reservas').send({}).expect(400);
+  });
+
+  afterAll(async () => {
     await app.close();
   });
 });
