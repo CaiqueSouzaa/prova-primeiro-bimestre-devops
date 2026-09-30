@@ -1,22 +1,12 @@
-output "state_bucket_name" {
-  description = "Bucket S3 que armazena o state remoto."
-  value       = aws_s3_bucket.state.bucket
+# outputs.tf
+
+output "s3_bucket_name" {
+  description = "Nome do bucket S3 para o Terraform state"
+  value       = local.bucket_name
+  depends_on  = [null_resource.s3_bucket]
 }
 
-output "lock_table_name" {
-  description = "Tabela DynamoDB usada para o lock do state."
-  value       = aws_dynamodb_table.lock.name
-}
-
-output "backend_config" {
-  description = "Bloco de backend a usar em infra/providers.tf."
-  value       = <<-EOT
-    backend "s3" {
-      bucket         = "${aws_s3_bucket.state.bucket}"
-      key            = "envs/dev/terraform.tfstate"
-      region         = "${var.aws_region}"
-      dynamodb_table = "${aws_dynamodb_table.lock.name}"
-      encrypt        = true
-    }
-  EOT
+output "dynamodb_table_name" {
+  description = "Nome da tabela DynamoDB usada para locking do state"
+  value       = aws_dynamodb_table.locks.name
 }

@@ -1,17 +1,7 @@
-variable "aws_region" {
-  description = "Região AWS. O AWS Academy Learner Lab só permite us-east-1."
-  type        = string
-  default     = "us-east-1"
-}
+# variables.tf
 
-variable "project" {
-  description = "Nome do projeto; usado como prefixo dos recursos e na tag Project."
+variable "project_name" {
+  description = "Nome do projeto (usado em tags e nomes)"
   type        = string
-  default     = "reservas"
-}
-
-variable "owner" {
-  description = "Responsável pelos recursos (tag Owner)."
-  type        = string
-  default     = "Caique Pereira de Souza"
+  default     = "technova"
 }
