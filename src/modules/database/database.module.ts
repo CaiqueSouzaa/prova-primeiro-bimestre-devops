@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ENTITIES } from "../../database/entities";
+import { MIGRATIONS } from "../../database/migrations";
 
 @Module({
     imports: [
@@ -24,6 +25,9 @@ import { ENTITIES } from "../../database/entities";
                     password: configService.get<string>('DB_PASSWORD'),
                     database: configService.get<string>('DB_DATABASE'),
                     entities: ENTITIES,
+                    migrations: MIGRATIONS,
+                    // Executa as migrations pendentes ao subir; as já aplicadas ficam registradas na tabela "migrations"
+                    migrationsRun: true,
                     logging: configService.get<string>('ORM_LOGGING') === 'true',
                     synchronize: configService.get<string>('ORM_SYNCHRONIZE') === 'true',
                 };
