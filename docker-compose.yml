@@ -28,7 +28,8 @@ services:
 
   backend:
     build:
-      context: .
+      # O código e o Dockerfile da API ficam em app/
+      context: ./app
       dockerfile: Dockerfile
     restart: unless-stopped
     env_file:
@@ -56,11 +57,14 @@ services:
       start_period: 20s
 
 networks:
+  # Redes bridge customizadas (não a "default" do Compose).
   # internal: true => sem rota para fora do Docker; o host não consegue alcançar nada nesta rede
   db_network:
+    driver: bridge
     internal: true
-  # Rede comum (bridge) que permite publicar a porta 3000 do backend no host
+  # Rede comum que permite publicar a porta 3000 do backend no host
   app_network:
+    driver: bridge
 
 volumes:
   postgres_data:

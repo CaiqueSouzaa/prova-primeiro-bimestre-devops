@@ -7,7 +7,9 @@ import { MIGRATIONS } from "../../database/migrations";
 @Module({
     imports: [
         ConfigModule.forRoot({
-            envFilePath: '.env',
+            // O .env fica na raiz do repositório (usado também pelo docker compose);
+            // '../.env' cobre a execução a partir de app/. No contêiner as variáveis já vêm do ambiente.
+            envFilePath: ['.env', '../.env'],
         }),
         TypeOrmModule.forRootAsync({
             imports: [

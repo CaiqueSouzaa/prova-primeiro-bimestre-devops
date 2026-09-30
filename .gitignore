@@ -1,10 +1,10 @@
-# compiled output
-/dist
-/node_modules
-/build
-
-# TypeScript build cache
+# ---------- Node / API (app/) ----------
+node_modules/
+dist/
+build/
 *.tsbuildinfo
+coverage/
+.nyc_output/
 
 # Logs
 logs
@@ -15,39 +15,8 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
-# OS
-.DS_Store
-
-# Tests
-/coverage
-/.nyc_output
-
-# IDEs and editors
-/.idea
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
-
-# IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-
-# dotenv environment variable files
-.env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
-
-# temp directory
-.temp
-.tmp
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Runtime data
 pids
@@ -55,5 +24,57 @@ pids
 *.seed
 *.pid.lock
 
-# Diagnostic reports (https://nodejs.org/api/report.html)
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+# temp directory
+.temp
+.tmp
+
+# ---------- Segredos ----------
+# Variáveis de ambiente reais (só o .env.example é versionado)
+.env
+.env.*
+!.env.example
+
+# Chaves SSH (ex.: labsuser.pem do Learner Lab)
+*.pem
+*.key
+
+# ---------- Terraform (infra/) ----------
+# Providers/módulos baixados pelo terraform init
+.terraform/
+
+# State local contém a senha do banco em texto plano
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info
+crash.log
+crash.*.log
+
+# Variáveis reais (IP pessoal, senhas). Só o .example vai para o Git.
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+
+# Planos salvos também carregam valores sensíveis
+*.tfplan
+tfplan
+
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# ---------- SO / editores ----------
+.DS_Store
+Thumbs.db
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
