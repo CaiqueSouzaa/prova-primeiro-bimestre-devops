@@ -1,124 +1,75 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# API de Reservas — Prova do Primeiro Bimestre (DevOps)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+- **Aluno:** Caique Pereira de Souza
+- **RA:** _preencher_
+- **Disciplina:** DevOps — Análise e Desenvolvimento de Sistemas (2026.2)
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Descrição
 
-## Description
+API de Reservas da TechNova: CRUD de reservas (`id`, `cliente`, `data`, `status`)
+em Node.js (NestJS sobre Express) com TypeORM, persistindo em PostgreSQL. O
+projeto cobre a jornada completa do bimestre: versionamento com Git, aplicação
+containerizada, ambiente local com Docker Compose e infraestrutura na AWS
+(AWS Academy Learner Lab) com Terraform modularizado e state remoto.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Rotas
 
-## Project setup
+| Método   | Rota            | Descrição                                        |
+|----------|-----------------|--------------------------------------------------|
+| `POST`   | `/reservas`     | Cria uma reserva (valida os campos obrigatórios) |
+| `GET`    | `/reservas`     | Lista todas as reservas                          |
+| `GET`    | `/reservas/:id` | Busca uma reserva pelo `id` (404 se não existir) |
+| `PUT`    | `/reservas/:id` | Atualiza uma reserva existente                   |
+| `DELETE` | `/reservas/:id` | Remove uma reserva                               |
+| `GET`    | `/health`       | Health check (200 só se o banco responder)       |
 
-```bash
-$ npm install
+## Estrutura
+
+```
+.
+├── app/                  # API de Reservas (NestJS): src/, package.json, Dockerfile, .dockerignore
+├── docker-compose.yml    # API + PostgreSQL (ambiente local)
+├── .env.example          # variáveis de ambiente (copie para .env)
+├── infra/                # Terraform: módulos vpc, security-group, ec2, rds + backend/ (S3 + DynamoDB)
+├── evidencias/           # saídas de docker build, docker compose ps, terraform plan
+└── relatorio.md          # relatório do processo com IA
 ```
 
-## Compile and run the project
+## Ambiente local (Docker Compose)
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+cp .env.example .env      # ajuste usuário/senha/banco
+docker compose up -d --build
+docker compose ps         # backend e postgres devem ficar (healthy)
+curl http://localhost:3000/health
 ```
 
-## Run tests
+Exemplo de uso:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+curl -X POST http://localhost:3000/reservas -H 'Content-Type: application/json' \
+  -d '{"cliente":"Maria Silva","data":"2026-10-15T19:30:00.000Z","status":"confirmada"}'
+curl http://localhost:3000/reservas
 ```
 
-## Deployment
+As migrations do TypeORM são aplicadas automaticamente na inicialização da API.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Desenvolvimento sem Docker
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+cd app
+npm ci
+npm run start:dev         # lê o .env da raiz do repositório
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Infraestrutura AWS
 
-## Observability
-
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
-
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
-
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
-
-To add it to this project:
+Passo a passo completo (bootstrap do remote state, `plan`/`apply`, evidências e
+`destroy`) em [infra/README.md](infra/README.md).
 
 ```bash
-$ npm install @nestjs/observe
+cd infra/backend && terraform init && terraform apply   # S3 + DynamoDB (uma vez)
+cd .. && cp terraform.tfvars.example terraform.tfvars   # ajuste owner e allowed_ssh_cidr
+terraform init && terraform plan -out tfplan && terraform apply tfplan
+terraform destroy                                       # ao final, sempre
 ```
-
-Then follow the [setup guide](https://docs.nestjs.com/observability/overview) - it takes a single import and an app key.
-
-The free plan needs no payment details and covers 300,000 events a month. You can also browse the [live demo](https://www.observe-demo.nestjs.com/dashboard) first - the whole dashboard over a busy service's data, with nothing to install.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observe](https://observe.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
