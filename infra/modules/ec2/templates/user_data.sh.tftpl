@@ -1,0 +1,63 @@
+#!/bin/bash
+# Renderizado pelo Terraform (templatefile). Roda uma única vez, como root, no primeiro boot.
+set -euxo pipefail
+exec > >(tee -a /var/log/user-data.log) 2>&1
+
+APP_DIR=/opt/reservas
+
+# t2.micro tem 1 GB de RAM: o "npm ci" + "nest build" do Dockerfile estoura
+# a memória sem swap.
+if [ ! -f /swapfile ]; then
+  dd if=/dev/zero of=/swapfile bs=1M count=2048
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  echo '/swapfile swap swap defaults 0 0' >> /etc/fstab
+fi
+
+dnf install -y docker git
+systemctl enable --now docker
+
+mkdir -p "$APP_DIR/certs"
+
+# RDS PostgreSQL 15+ exige SSL (rds.force_ssl=1). Baixa o bundle de CAs do RDS
+# para a API validar o certificado do banco, em vez de aceitar qualquer um.
+curl -fsSL "https://truststore.pki.rds.amazonaws.com/${aws_region}/${aws_region}-bundle.pem" \
+  -o "$APP_DIR/certs/rds-ca.pem"
+chmod 644 "$APP_DIR/certs/rds-ca.pem"
+
+rm -rf "$APP_DIR/src"
+git clone --depth 1 --branch "${app_repo_ref}" "${app_repo_url}" "$APP_DIR/src"
+
+# Variáveis de ambiente da API. Arquivo legível só pelo root (contém a senha).
+# O heredoc com 'EOF' entre aspas impede o shell de interpretar os valores.
+install -m 600 /dev/null "$APP_DIR/app.env"
+cat > "$APP_DIR/app.env" <<'EOF'
+PORT=${api_port}
+DB_HOST=${db_host}
+DB_PORT=${db_port}
+DB_DATABASE=${db_name}
+DB_USERNAME=${db_username}
+DB_PASSWORD=${db_password}
+ORM_LOGGING=false
+ORM_SYNCHRONIZE=false
+PGSSLMODE=require
+NODE_EXTRA_CA_CERTS=/certs/rds-ca.pem
+EOF
+
+# O Dockerfile da API fica em app/ (o repositório também tem infra/, evidencias/ etc.).
+docker build -t reservas-api:latest "$APP_DIR/src/${app_dir}"
+
+docker rm -f reservas-api 2>/dev/null || true
+docker run -d \
+  --name reservas-api \
+  --restart unless-stopped \
+  --env-file "$APP_DIR/app.env" \
+  -v "$APP_DIR/certs:/certs:ro" \
+  -p ${api_port}:${api_port} \
+  --health-cmd "wget -q -O /dev/null http://127.0.0.1:${api_port}/health || exit 1" \
+  --health-interval 10s \
+  --health-start-period 30s \
+  reservas-api:latest
+
+echo "user_data finalizado"
