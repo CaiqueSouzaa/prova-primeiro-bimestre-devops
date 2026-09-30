@@ -1,7 +1,7 @@
 # API de Reservas — Prova do Primeiro Bimestre (DevOps)
 
 - **Aluno:** Caique Pereira de Souza
-- **RA:** _preencher_
+- **RA:** 6325095
 - **Disciplina:** DevOps — Análise e Desenvolvimento de Sistemas (2026.2)
 
 ## Descrição
