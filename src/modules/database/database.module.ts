@@ -22,8 +22,8 @@ import { TypeOrmModule } from "@nestjs/typeorm";
                     username: configService.get<string>('DB_USERNAME'),
                     password: configService.get<string>('DB_PASSWORD'),
                     database: configService.get<string>('DB_DATABASE'),
-                    logging: configService.get<boolean>('ORM_LOGGING'),
-                    synchronize: configService.get<boolean>('ORM_SYNCHRONIZE'),
+                    logging: configService.get<string>('ORM_LOGGING') === 'true',
+                    synchronize: configService.get<string>('ORM_SYNCHRONIZE') === 'true',
                 };
             }
         })
