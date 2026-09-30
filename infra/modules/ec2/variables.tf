@@ -1,91 +1,54 @@
-variable "name" {
-  description = "Prefixo usado na tag Name dos recursos."
-  type        = string
-}
+# modules/ec2/variables.tf
 
-variable "aws_region" {
-  description = "Região AWS (usada para baixar o bundle de CA do RDS correspondente)."
+variable "instance_name" {
+  description = "Nome da instância EC2"
   type        = string
 }
 
 variable "instance_type" {
-  description = "Tipo da instância EC2."
+  description = "Tipo da instância"
   type        = string
   default     = "t2.micro"
 }
 
-variable "subnet_id" {
-  description = "ID da subnet pública onde a instância será criada."
+variable "ami_id" {
+  description = "AMI ID para a instância"
   type        = string
 }
 
-variable "ec2_sg_id" {
-  description = "ID do security group da EC2."
+variable "subnet_id" {
+  description = "ID da subnet onde a instância será criada"
   type        = string
+}
+
+variable "security_group_ids" {
+  description = "Lista de Security Group IDs"
+  type        = list(string)
 }
 
 variable "key_name" {
-  description = "Nome do key pair existente para acesso SSH (no Learner Lab: vockey)."
+  description = "Nome do key pair para SSH"
   type        = string
 }
 
-variable "instance_profile_name" {
-  description = "Instance profile já existente no Learner Lab (não é criado pelo Terraform)."
+variable "iam_instance_profile" {
+  description = "Instance profile a associar ao EC2 (no Learner Lab: LabInstanceProfile)"
   type        = string
-  default     = "LabInstanceProfile"
+  default     = null
 }
 
-variable "root_volume_size" {
-  description = "Tamanho do volume raiz em GB (espaço para imagens e build Docker)."
-  type        = number
-  default     = 20
-}
-
-variable "app_repo_url" {
-  description = "URL HTTPS do repositório Git público do projeto."
+variable "user_data" {
+  description = "Script user_data executado na inicialização da instância"
   type        = string
+  default     = ""
 }
 
-variable "app_repo_ref" {
-  description = "Branch ou tag do repositório a ser implantada."
-  type        = string
-  default     = "main"
-}
-
-variable "app_dir" {
-  description = "Diretório, relativo à raiz do repositório, que contém o Dockerfile da API."
-  type        = string
-  default     = "app"
-}
-
-variable "api_port" {
-  description = "Porta HTTP da API."
-  type        = number
-  default     = 3000
-}
-
-variable "db_host" {
-  description = "Hostname do RDS."
+variable "environment" {
+  description = "Ambiente (dev, staging, prod)"
   type        = string
 }
 
-variable "db_port" {
-  description = "Porta do RDS."
-  type        = number
-}
-
-variable "db_name" {
-  description = "Nome do banco de dados."
+variable "project_name" {
+  description = "Nome do projeto para tags"
   type        = string
-}
-
-variable "db_username" {
-  description = "Usuário do banco usado pela API."
-  type        = string
-}
-
-variable "db_password" {
-  description = "Senha do banco usada pela API."
-  type        = string
-  sensitive   = true
 }
