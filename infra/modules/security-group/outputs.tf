@@ -1,9 +1,11 @@
-output "ec2_sg_id" {
-  description = "ID do security group da EC2."
-  value       = aws_security_group.ec2.id
+# modules/security-group/outputs.tf
+
+output "sg_id" {
+  description = "ID do Security Group criado"
+  value       = aws_security_group.this.id
 }
 
-output "rds_sg_id" {
-  description = "ID do security group do RDS."
-  value       = aws_security_group.rds.id
+output "sg_name" {
+  description = "Nome do Security Group"
+  value       = aws_security_group.this.name
 }

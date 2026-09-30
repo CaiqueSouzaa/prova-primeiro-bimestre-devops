@@ -1,31 +1,59 @@
+# modules/security-group/variables.tf
+
 variable "name" {
-  description = "Prefixo usado no nome e na tag Name dos security groups."
+  description = "Nome do Security Group"
   type        = string
+}
+
+variable "description" {
+  description = "Descrição do Security Group"
+  type        = string
+  default     = "Managed by Terraform"
 }
 
 variable "vpc_id" {
-  description = "ID da VPC onde os security groups serão criados."
+  description = "ID da VPC onde o SG será criado"
   type        = string
 }
 
-variable "allowed_ssh_cidr" {
-  description = "Único CIDR autorizado a acessar a porta 22 da EC2 (o seu IP público /32)."
+variable "ingress_rules" {
+  description = "Lista de regras de entrada"
+  type = list(object({
+    from_port   = number
+    to_port     = number
+    protocol    = string
+    cidr_blocks = list(string)
+    description = string
+  }))
+  default = []
+}
+
+variable "egress_rules" {
+  description = "Lista de regras de saída"
+  type = list(object({
+    from_port   = number
+    to_port     = number
+    protocol    = string
+    cidr_blocks = list(string)
+    description = string
+  }))
+  default = [
+    {
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+      description = "Allow all outbound"
+    }
+  ]
+}
+
+variable "environment" {
+  description = "Ambiente (dev, staging, prod)"
   type        = string
-
-  validation {
-    condition     = can(cidrhost(var.allowed_ssh_cidr, 0)) && endswith(var.allowed_ssh_cidr, "/32")
-    error_message = "allowed_ssh_cidr deve ser um único IP no formato x.x.x.x/32."
-  }
 }
 
-variable "api_port" {
-  description = "Porta HTTP em que a API escuta."
-  type        = number
-  default     = 3000
-}
-
-variable "db_port" {
-  description = "Porta do PostgreSQL."
-  type        = number
-  default     = 5432
+variable "project_name" {
+  description = "Nome do projeto para tags"
+  type        = string
 }
