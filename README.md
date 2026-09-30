@@ -81,7 +81,9 @@ npm run start:dev         # lê o .env da raiz do repositório
 A cada nova sessão do Learner Lab, exporte as credenciais temporárias
 (**AWS Details → AWS CLI → Show**).
 
-No PowerShell:
+#### Windows
+
+PowerShell:
 ```powershell
 $env:AWS_ACCESS_KEY_ID="ASIA..."
 $env:AWS_SECRET_ACCESS_KEY="..."
@@ -89,13 +91,35 @@ $env:AWS_SESSION_TOKEN="..."
 $env:AWS_DEFAULT_REGION="us-east-1"
 ```
 
-No WSL/Linux:
+Prompt de Comando (cmd.exe) — sem aspas e sem espaços ao redor do `=`:
+```bat
+set AWS_ACCESS_KEY_ID=ASIA...
+set AWS_SECRET_ACCESS_KEY=...
+set AWS_SESSION_TOKEN=...
+set AWS_DEFAULT_REGION=us-east-1
+```
+
+#### macOS e Linux (inclui WSL e Git Bash)
+
+Bash ou Zsh (padrão do macOS):
 ```bash
 export AWS_ACCESS_KEY_ID="ASIA..."
 export AWS_SECRET_ACCESS_KEY="..."
 export AWS_SESSION_TOKEN="..."
 export AWS_DEFAULT_REGION="us-east-1"
 ```
+
+#### Conferindo
+
+Em qualquer sistema, valide se as credenciais foram carregadas:
+```bash
+aws sts get-caller-identity
+```
+
+> As variáveis valem **apenas para o terminal atual** — abrir outra janela ou
+> reiniciar a sessão do Learner Lab exige defini-las de novo. Não salve as
+> credenciais em arquivos versionados; se preferir guardá-las num script, use
+> `aws-creds.sh`, que já está no `.gitignore`.
 
 > **Usando WSL?** Rode o Terraform dentro do filesystem nativo do Linux (`~/`)
 > para evitar erros de permissão (`chmod: operation not permitted`) ao acessar
