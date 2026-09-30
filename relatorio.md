@@ -1,8 +1,8 @@
 # Relatório do Processo — Prova do Primeiro Bimestre (DevOps)
 
 **Aluno:** Caique Pereira de Souza  
-**RA:** _preencher_  
-**Ferramenta de IA utilizada:** _preencher_
+**RA:** 6325095 
+**Ferramenta de IA utilizada:** Claude AI Sonnet 5.5 Free (Melhoria de prompt) e Claude Code Opus 5.5 (Ajuda no projeto)
 
 > Responda de forma dissertativa (mínimo 10 linhas por questão), com base na sua experiência real.
 
