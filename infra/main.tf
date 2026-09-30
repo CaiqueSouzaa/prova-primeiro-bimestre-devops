@@ -1,72 +1,151 @@
-locals {
-  name = "${var.project}-${var.environment}"
+# main.tf (ROOT) — Composição dos módulos
 
-  # Senha informada no tfvars tem precedência; senão, usa a gerada.
-  db_password = coalesce(var.db_password, random_password.db.result)
-}
-
-# Senha gerada pelo Terraform: não aparece no código nem no tfvars (só no state,
-# que é cifrado no S3). Sem "/", "@", "\"" e espaço, que o RDS proíbe, e sem
-# caracteres que o shell ou o --env-file do Docker interpretariam.
-resource "random_password" "db" {
-  length           = 24
-  special          = true
-  override_special = "-_"
-}
-
+# ========================================
+# 1. VPC (base de tudo)
+# ========================================
 module "vpc" {
   source = "./modules/vpc"
 
-  name                 = local.name
-  vpc_cidr             = var.vpc_cidr
-  azs                  = var.azs
-  public_subnet_cidrs  = var.public_subnet_cidrs
-  private_subnet_cidrs = var.private_subnet_cidrs
+  vpc_cidr     = var.vpc_cidr
+  project_name = var.project_name
+  environment  = var.environment
+  subnets      = var.subnets
 }
 
-module "security_group" {
+# ========================================
+# 2. Security Groups (vpc_id ← módulo VPC)
+# ========================================
+module "api_sg" {
   source = "./modules/security-group"
 
-  name             = local.name
-  vpc_id           = module.vpc.vpc_id
-  allowed_ssh_cidr = var.allowed_ssh_cidr
-  api_port         = var.api_port
+  name         = "${var.project_name}-${var.environment}-api-sg"
+  description  = "API - SSH e porta 3000"
+  vpc_id       = module.vpc.vpc_id
+  environment  = var.environment
+  project_name = var.project_name
+
+  ingress_rules = [
+    { from_port = 22, to_port = 22, protocol = "tcp", cidr_blocks = ["0.0.0.0/0"], description = "SSH" },
+    { from_port = var.api_port, to_port = var.api_port, protocol = "tcp", cidr_blocks = ["0.0.0.0/0"], description = "API Node.js" },
+  ]
 }
 
-module "rds" {
+module "rds_sg" {
+  source = "./modules/security-group"
+
+  name         = "${var.project_name}-${var.environment}-rds-sg"
+  description  = "RDS - PostgreSQL apenas da VPC"
+  vpc_id       = module.vpc.vpc_id
+  environment  = var.environment
+  project_name = var.project_name
+
+  # Permite conexão de qualquer recurso dentro da VPC (EC2 incluso)
+  ingress_rules = [
+    { from_port = 5432, to_port = 5432, protocol = "tcp", cidr_blocks = [var.vpc_cidr], description = "PostgreSQL from VPC" },
+  ]
+}
+
+# ========================================
+# 3. RDS (subnets privadas ← VPC, SG ← rds_sg)
+# ========================================
+module "database" {
   source = "./modules/rds"
 
-  name               = local.name
-  private_subnet_ids = module.vpc.private_subnet_ids
-  rds_sg_id          = module.security_group.rds_sg_id
-
-  engine_version = var.db_engine_version
-  instance_class = var.db_instance_class
-  db_name        = var.db_name
-  db_username    = var.db_username
-  db_password    = local.db_password
+  db_name            = var.db_name
+  db_username        = var.db_username
+  db_password        = var.db_password
+  subnet_ids         = module.vpc.private_subnet_ids
+  security_group_ids = [module.rds_sg.sg_id]
+  instance_class     = var.db_instance_class
+  environment        = var.environment
+  project_name       = var.project_name
 }
 
-module "ec2" {
+# ========================================
+# 4. EC2 (subnet ← VPC, SG ← api_sg, conexão ← RDS)
+# ========================================
+data "aws_ami" "amazon_linux" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["al2023-ami-*-x86_64"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
+resource "aws_key_pair" "this" {
+  key_name   = "${var.project_name}-${var.environment}-key"
+  public_key = file(var.ssh_public_key_path)
+
+  tags = {
+    Name        = "${var.project_name}-${var.environment}-key"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "terraform"
+  }
+}
+
+module "api_server" {
   source = "./modules/ec2"
 
-  name          = local.name
-  aws_region    = var.aws_region
-  instance_type = var.instance_type
-  subnet_id     = module.vpc.public_subnet_ids[0]
-  ec2_sg_id     = module.security_group.ec2_sg_id
-  key_name      = var.key_name
+  instance_name        = "${var.project_name}-${var.environment}-api"
+  instance_type        = var.instance_type
+  ami_id               = data.aws_ami.amazon_linux.id
+  subnet_id            = module.vpc.public_subnet_ids[0]
+  security_group_ids   = [module.api_sg.sg_id]
+  key_name             = aws_key_pair.this.key_name
+  iam_instance_profile = "LabInstanceProfile" # pré-existente no Learner Lab, NÃO criar role
+  environment          = var.environment
+  project_name         = var.project_name
 
-  app_repo_url = var.app_repo_url
-  app_repo_ref = var.app_repo_ref
-  app_dir      = var.app_dir
-  api_port     = var.api_port
+  # Sobe a API de Reservas (app/Dockerfile) apontando para o RDS (← outputs do módulo database)
+  user_data = <<-EOF
+    #!/bin/bash
+    exec > >(tee -a /var/log/reservas-setup.log) 2>&1
+    echo "[setup] início"
 
-  # Os dados de conexão vêm dos outputs do RDS, o que também faz a EC2
-  # ser criada só depois que o banco estiver disponível.
-  db_host     = module.rds.db_address
-  db_port     = module.rds.db_port
-  db_name     = module.rds.db_name
-  db_username = var.db_username
-  db_password = local.db_password
+    # t2.micro tem 1 GB de RAM: sem swap o build da imagem (npm ci + nest build) estoura a memória
+    dd if=/dev/zero of=/swapfile bs=1M count=2048
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+
+    dnf install -y docker git postgresql15
+    systemctl enable --now docker
+
+    mkdir -p /opt/reservas/certs
+    git clone --depth 1 ${var.app_repo_url} /opt/reservas/src
+
+    # RDS PostgreSQL 15 exige SSL: CA do RDS para a API validar o certificado do banco
+    curl -fsSL https://truststore.pki.rds.amazonaws.com/${var.aws_region}/${var.aws_region}-bundle.pem -o /opt/reservas/certs/rds-ca.pem
+
+    install -m 600 /dev/null /opt/reservas/app.env
+    cat > /opt/reservas/app.env <<'ENV'
+    PORT=${var.api_port}
+    DB_HOST=${module.database.db_address}
+    DB_PORT=${module.database.db_port}
+    DB_DATABASE=${module.database.db_name}
+    DB_USERNAME=${var.db_username}
+    DB_PASSWORD=${var.db_password}
+    ORM_LOGGING=false
+    ORM_SYNCHRONIZE=false
+    PGSSLMODE=require
+    NODE_EXTRA_CA_CERTS=/certs/rds-ca.pem
+    ENV
+
+    docker build -t reservas-api /opt/reservas/src/app
+    docker run -d --name reservas-api --restart unless-stopped \
+      --env-file /opt/reservas/app.env \
+      -v /opt/reservas/certs:/certs:ro \
+      -p ${var.api_port}:${var.api_port} \
+      reservas-api
+
+    echo "[setup] fim"
+  EOF
 }

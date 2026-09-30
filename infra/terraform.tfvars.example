@@ -1,31 +1,33 @@
-# Copie para terraform.tfvars (ignorado pelo Git) e ajuste os valores.
+# terraform.tfvars.example
+# Copie para terraform.tfvars e ajuste os valores antes de aplicar.
+# NUNCA versione o terraform.tfvars (está no .gitignore).
 
-aws_region  = "us-east-1"
-project     = "reservas"
-environment = "dev"
-owner       = "Seu Nome"
+# ── Variáveis obrigatórias ──────────────────────────────────────────────────
 
-# Rede
-vpc_cidr             = "10.0.0.0/16"
-azs                  = ["us-east-1a", "us-east-1b"]
-public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
-private_subnet_cidrs = ["10.0.101.0/24", "10.0.102.0/24"]
+# Senha do RDS: use apenas caracteres alfanuméricos.
+# O RDS rejeita: / @ " e espaço.
+db_password = "Troque-por-uma-senha-forte-123"
 
-# Seu IP público: curl https://checkip.amazonaws.com
-allowed_ssh_cidr = "203.0.113.10/32"
+# ── Variáveis opcionais (defaults já definidos em variables.tf) ─────────────
 
-# EC2 / API
-instance_type = "t2.micro"
-key_name      = "vockey"
-api_port      = 3000
-app_repo_url  = "https://github.com/CaiqueSouzaa/prova-primeiro-bimestre-devops.git"
-app_repo_ref  = "main"
-app_dir       = "app"
+# aws_region    = "us-east-1"          # Learner Lab: sempre us-east-1
+# project_name  = "technova"
+# environment   = "dev"
+# vpc_cidr      = "10.0.0.0/16"
 
-# RDS
-db_engine_version = "16.15"
-db_instance_class = "db.t3.micro"
-db_name           = "reservas"
-db_username       = "reservas_admin"
-# db_password: deixe comentado para o Terraform gerar uma senha aleatória.
-# db_password = "nao-coloque-senha-real-aqui"
+# subnets = {
+#   "public-1"  = { cidr = "10.0.1.0/24", az = "us-east-1a", type = "public"  }
+#   "public-2"  = { cidr = "10.0.2.0/24", az = "us-east-1b", type = "public"  }
+#   "private-1" = { cidr = "10.0.3.0/24", az = "us-east-1a", type = "private" }
+#   "private-2" = { cidr = "10.0.4.0/24", az = "us-east-1b", type = "private" }
+# }
+
+# ssh_public_key_path = "~/.ssh/technova-key.pub"
+# instance_type       = "t2.micro"
+# api_port            = 3000
+
+# app_repo_url = "https://github.com/CaiqueSouzaa/prova-primeiro-bimestre-devops.git"
+
+# db_name           = "reservas"
+# db_username       = "technova_admin"
+# db_instance_class = "db.t3.micro"
