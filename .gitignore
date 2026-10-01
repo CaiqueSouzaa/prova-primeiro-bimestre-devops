@@ -40,8 +40,8 @@ pids
 
 # ---------- Terraform (infra/) ----------
 # Providers/módulos baixados pelo terraform init
-.terraform/
-.terraform.lock.hcl
+infra/.terraform/
+infra/backend/.terraform.lock.hcl
 
 # Credenciais temporárias do Learner Lab
 aws-creds.sh
