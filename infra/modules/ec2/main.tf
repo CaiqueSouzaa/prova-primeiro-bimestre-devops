@@ -12,7 +12,7 @@ resource "aws_instance" "this" {
   user_data = var.user_data != "" ? var.user_data : null
 
   root_block_device {
-    volume_size = 8
+    volume_size = 30
     volume_type = "gp2"
   }
 
