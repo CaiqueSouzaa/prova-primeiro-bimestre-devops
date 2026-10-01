@@ -1,5 +1,20 @@
 # API de Reservas — Prova do Primeiro Bimestre (DevOps)
 
+> [!WARNING]
+> **Compatibilidade do ambiente**
+>
+> Este projeto foi desenvolvido e testado em **Linux** e **macOS**. No **Windows**, o ambiente Docker (volumes, permissões de arquivo e scripts de inicialização) pode apresentar comportamentos inesperados e **o projeto pode não funcionar corretamente**.
+>
+> Caso você esteja no Windows, utilize o **WSL (Windows Subsystem for Linux)** — preferencialmente com o projeto clonado dentro do filesystem nativo do Linux (`~/`), e não sob `/mnt/c/`. Isso evita erros de permissão e garante compatibilidade com Docker e Terraform.
+>
+> **Resumo de compatibilidade:**
+> | Sistema Operacional | Suporte |
+> |---|---|
+> | Linux | ✅ Suportado |
+> | macOS | ✅ Suportado |
+> | Windows com WSL | ⚠️ Suportado (use o filesystem nativo do Linux) |
+> | Windows nativo | ❌ Não suportado / pode não funcionar |
+
 - **Aluno:** Caique Pereira de Souza
 - **RA:** 6325095
 - **Disciplina:** DevOps — Análise e Desenvolvimento de Sistemas (2026.2)
@@ -108,6 +123,38 @@ export AWS_SECRET_ACCESS_KEY="..."
 export AWS_SESSION_TOKEN="..."
 export AWS_DEFAULT_REGION="us-east-1"
 ```
+
+#### AWS CLI (`aws configure`)
+
+Alternativamente, você pode configurar as credenciais de forma persistente usando o comando `aws configure`. Isso salva as credenciais no arquivo `~/.aws/credentials` (ou `%USERPROFILE%\.aws\credentials` no Windows).
+
+> ⚠️ Como as credenciais do Learner Lab são **temporárias**, você precisará incluir também o `aws_session_token`, que o `aws configure` padrão não solicita. Use os comandos abaixo:
+
+```bash
+aws configure set aws_access_key_id "ASIA..."
+aws configure set aws_secret_access_key "..."
+aws configure set aws_session_token "..."
+aws configure set default.region "us-east-1"
+```
+
+Ou edite diretamente o arquivo `~/.aws/credentials`:
+
+```ini
+[default]
+aws_access_key_id     = ASIA...
+aws_secret_access_key = ...
+aws_session_token     = ...
+```
+
+E o arquivo `~/.aws/config`:
+
+```ini
+[default]
+region = us-east-1
+output = json
+```
+
+> As credenciais configuradas via `aws configure` persistem entre terminais, mas continuam **expirando junto com a sessão do Learner Lab** — atualize-as sempre que iniciar uma nova sessão. Nunca versione esses arquivos.
 
 #### Conferindo
 
