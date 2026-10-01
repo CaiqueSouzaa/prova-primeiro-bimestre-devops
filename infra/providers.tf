@@ -14,7 +14,7 @@ terraform {
   # State remoto: bucket S3 + tabela DynamoDB criados ANTES em infra/backend/.
   # Troque o bucket pelo output s3_bucket_name do backend e rode "terraform init".
   backend "s3" {
-    bucket         = "technova-terraform-state-c6ca0e44"
+    bucket         = "technova-terraform-state-XXXXXXXX"
     key            = "prova-primeiro-bimestre/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
