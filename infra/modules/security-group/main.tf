@@ -20,9 +20,12 @@ resource "aws_security_group_rule" "ingress" {
   from_port         = var.ingress_rules[count.index].from_port
   to_port           = var.ingress_rules[count.index].to_port
   protocol          = var.ingress_rules[count.index].protocol
-  cidr_blocks       = var.ingress_rules[count.index].cidr_blocks
   description       = var.ingress_rules[count.index].description
   security_group_id = aws_security_group.this.id
+
+  # Mutuamente exclusivos: se source_security_group_id for informado, ignora cidr_blocks
+  cidr_blocks              = var.ingress_rules[count.index].source_security_group_id == null ? var.ingress_rules[count.index].cidr_blocks : null
+  source_security_group_id = var.ingress_rules[count.index].source_security_group_id
 }
 
 resource "aws_security_group_rule" "egress" {

@@ -17,13 +17,14 @@ variable "vpc_id" {
 }
 
 variable "ingress_rules" {
-  description = "Lista de regras de entrada"
+  description = "Lista de regras de entrada. Use cidr_blocks para intervalos de IP ou source_security_group_id para referenciar outro SG (os dois são mutuamente exclusivos na AWS)."
   type = list(object({
-    from_port   = number
-    to_port     = number
-    protocol    = string
-    cidr_blocks = list(string)
-    description = string
+    from_port                = number
+    to_port                  = number
+    protocol                 = string
+    cidr_blocks              = optional(list(string), [])
+    source_security_group_id = optional(string, null)
+    description              = string
   }))
   default = []
 }
