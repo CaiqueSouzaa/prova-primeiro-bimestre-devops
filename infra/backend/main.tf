@@ -66,9 +66,46 @@ resource "null_resource" "s3_bucket" {
     SH
   }
 
-  # destroy: sem interpreter — Terraform usa sh no Linux e cmd no Windows
+  # destroy: remove TODAS as versões e delete markers antes de deletar o bucket.
+  # Necessário porque o bucket tem versionamento habilitado — "aws s3 rb --force"
+  # não remove versões antigas, causando falha silenciosa.
   provisioner "local-exec" {
-    when    = destroy
-    command = "aws s3 rb s3://${self.triggers.bucket_name} --force || true"
+    when        = destroy
+    interpreter = ["sh", "-c"]
+    command     = <<-SH
+      BUCKET="${self.triggers.bucket_name}"
+      echo "==> Removendo todos os objetos (versões + delete markers) do bucket $BUCKET..."
+
+      # Remove todas as versões de objetos
+      aws s3api list-object-versions --bucket "$BUCKET" \
+        --query 'Versions[].{Key:Key,VersionId:VersionId}' \
+        --output json 2>/dev/null | \
+      python3 -c "
+import sys, json, subprocess
+items = json.load(sys.stdin) or []
+for item in items:
+    subprocess.run(['aws','s3api','delete-object','--bucket','$BUCKET',
+                    '--key', item['Key'], '--version-id', item['VersionId']], check=True)
+print(f'Versões removidas: {len(items)}')
+"
+
+      # Remove todos os delete markers
+      aws s3api list-object-versions --bucket "$BUCKET" \
+        --query 'DeleteMarkers[].{Key:Key,VersionId:VersionId}' \
+        --output json 2>/dev/null | \
+      python3 -c "
+import sys, json, subprocess
+items = json.load(sys.stdin) or []
+for item in items:
+    subprocess.run(['aws','s3api','delete-object','--bucket','$BUCKET',
+                    '--key', item['Key'], '--version-id', item['VersionId']], check=True)
+print(f'Delete markers removidos: {len(items)}')
+"
+
+      # Deleta o bucket (agora vazio)
+      echo "==> Deletando bucket $BUCKET..."
+      aws s3api delete-bucket --bucket "$BUCKET" --region us-east-1
+      echo "==> Bucket $BUCKET deletado com sucesso."
+    SH
   }
 }
