@@ -81,6 +81,10 @@ npm run start:dev         # lê o .env da raiz do repositório
 
 > Documentação completa em [infra/README.md](infra/README.md).
 
+## Relatório
+
+O processo de desenvolvimento com IA como copiloto está documentado em [relatorio.md](relatorio.md).
+
 ### Pré-requisitos
 
 - Terraform >= 1.3 instalado
