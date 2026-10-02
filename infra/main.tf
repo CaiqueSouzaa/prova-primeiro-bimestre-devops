@@ -34,14 +34,20 @@ module "rds_sg" {
   source = "./modules/security-group"
 
   name         = "${var.project_name}-${var.environment}-rds-sg"
-  description  = "RDS - PostgreSQL apenas da VPC"
+  description  = "RDS - PostgreSQL apenas do SG da EC2"
   vpc_id       = module.vpc.vpc_id
   environment  = var.environment
   project_name = var.project_name
 
-  # Permite conexão de qualquer recurso dentro da VPC (EC2 incluso)
+  # Permite conexão APENAS do Security Group da EC2 (menor privilégio)
   ingress_rules = [
-    { from_port = 5432, to_port = 5432, protocol = "tcp", cidr_blocks = [var.vpc_cidr], description = "PostgreSQL from VPC" },
+    {
+      from_port                = 5432
+      to_port                  = 5432
+      protocol                 = "tcp"
+      source_security_group_id = module.api_sg.sg_id
+      description              = "PostgreSQL apenas do SG da API"
+    },
   ]
 }
 
