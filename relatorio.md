@@ -2,7 +2,7 @@
 
 **Aluno:** Caique Pereira de Souza  
 **RA:** 6325095 
-**Ferramenta de IA utilizada:** Claude AI Sonnet 5.5 Free (Melhoria de prompt) e Claude Code Opus 5.5 (Ajuda no projeto)
+**Ferramenta de IA utilizada:** Claude Code Opus 5.5 (Ajuda no projeto) e Kiro (Terraform)
 
 > Responda de forma dissertativa (mínimo 10 linhas por questão), com base na sua experiência real.
 
@@ -10,7 +10,7 @@
 
 _Como você conectou Git → Docker → Compose → Terraform → módulos → remote state; a ordem seguida e por quê; onde cada aula (01 a 07) aparece na solução._
 
-Comecei pelo Git, que é o que deixa o projeto versionado e me permite mandar tudo pro GitHub. Depois veio o Docker: com o Dockerfile e o docker-compose.yml eu consigo subir a API e o PostgreSQL na minha máquina com um comando só, sem ficar configurando nada na mão. Com isso funcionando, parti pro Terraform. Quando ele sobe a EC2, o user data instala o Docker e o Git, clona o meu repositório do GitHub, builda a imagem da API e roda o container já apontando pro RDS. Na nuvem quem faz o papel do banco é o RDS, então o Compose acabou ficando só pro ambiente local.
+Comecei pelo Git, que é o que deixa o projeto versionado e me permite mandar tudo pro GitHub. Depois veio o Docker: com o Dockerfile e o docker-compose.yml eu consigo subir a API e o PostgreSQL na minha máquina com um comando só, sem ficar configurando nada na mão. Com isso funcionando, parti pro Terraform. Quando ele sobe a EC2, o user data instala o Docker e o Git, clona o meu repositório do GitHub, builda a imagem da API e roda o container já apontando pro RDS. Na nuvem quem faz o papel do banco é o RDS, então o Compose ficou só pro ambiente local.
 
 Segui essa ordem porque uma coisa depende da outra. Sem o código no GitHub a EC2 não tem de onde puxar a aplicação, e sem o Docker não teria como rodar ela igual em todo lugar. No Terraform, antes de tudo eu criei o backend do remote state (o bucket S3 e a tabela do DynamoDB, que ficam em infra/backend), porque o projeto principal já precisa dele no terraform init. Só depois montei a infraestrutura usando os módulos vpc, security-group, rds e ec2, um usando o output do outro.
 
@@ -109,7 +109,7 @@ _Arquitetura provisionada; por que o RDS fica na subnet privada e a EC2 na públ
 
 A arquitetura tem uma VPC com duas subnets públicas e duas privadas, em duas AZs. As públicas saem pra internet pelo Internet Gateway e as privadas não têm saída. A EC2 com a API fica numa subnet pública e o RDS PostgreSQL fica nas privadas.
 
-O RDS fica na subnet privada porque ele não deve ser exposto pra internet aberta, onde ficaria acessível pra todo mundo. Ele só pode ser acessado de dentro da VPC: está com publicly_accessible = false e o Security Group dele só libera a porta 5432 pro CIDR da VPC. É assim que a EC2, mesmo estando na subnet pública, consegue conversar com o banco.
+O RDS fica na subnet privada porque ele não deve ser exposto pra internet aberta, onde ficaria acessível pra todo mundo. Ele só pode ser acessado de dentro da VPC: está com publicly_accessible = false e o Security Group dele só libera a porta 5432 pro Security Group da EC2 (menor privilégio). É assim que a EC2, mesmo estando na subnet pública, consegue conversar com o banco.
 
 A EC2 está na subnet pública porque é nela que está a API, e a API precisa ficar exposta pro mundo, e somente ela, pra que as pessoas ou outros serviços de fora possam acessar. O Security Group dela libera só a porta 3000 da API e a 22 do SSH.
 
