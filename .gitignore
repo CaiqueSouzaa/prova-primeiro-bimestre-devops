@@ -39,8 +39,12 @@ pids
 *.key
 
 # ---------- Terraform (infra/) ----------
-# Providers/módulos baixados pelo terraform init
-infra/.terraform/
+# Providers/módulos baixados pelo terraform init — nunca versionar
+**/.terraform/
+
+# O .terraform.lock.hcl DEVE ser versionado (garante versões consistentes de providers).
+# Excepcionalmente ignoramos apenas o da pasta backend para evitar conflitos de
+# inicialização em máquinas diferentes (o backend não tem state remoto próprio).
 infra/backend/.terraform.lock.hcl
 
 # Credenciais temporárias do Learner Lab
